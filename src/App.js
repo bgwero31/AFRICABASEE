@@ -4,8 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import Home from "./pages/Home";
-import Chat from "./pages/Chat";          // matches your Chat.js
-import Market from "./pages/Market";     // matches your Market.js
+import Chat from "./pages/Chat";
+import Market from "./pages/Market";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 
@@ -24,7 +24,14 @@ function App() {
 
   if (checking) {
     return (
-      <div style={{ display: "flex", height: "100vh", justifyContent: "center", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          height: "100vh",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <p style={{ fontSize: 18, fontWeight: "bold" }}>Checking login...</p>
       </div>
     );
@@ -37,7 +44,7 @@ function App() {
           <Route path="*" element={<Login />} />
         ) : (
           <>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home />} />   {/* Navbar is inside Home */}
             <Route path="/chat" element={<Chat />} />
             <Route path="/market" element={<Market />} />
             <Route path="/profile" element={<Profile />} />
