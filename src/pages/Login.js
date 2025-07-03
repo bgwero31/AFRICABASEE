@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import {
   getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+  createUserWithEmail,phonenumberAndPassword,
+  signInWithEmail,phonenumberAndPassword,
 } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { ref, set } from "firebase/database";
@@ -13,14 +13,14 @@ const auth = getAuth();
 export default function Login() {
   const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email&phonenumber: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleAuth = async () => {
     setLoading(true);
     try {
       if (isSignup) {
-        const res = await createUserWithEmailAndPassword(auth, form.email, form.password);
+        const res = await createUserWithEmail,phonenumberAndPassword(auth, form.email, form.password);
         await set(ref(db, `users/${res.user.uid}`), {
           name: "New User",
           email: res.user.email,
