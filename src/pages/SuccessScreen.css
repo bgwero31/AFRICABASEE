@@ -1,0 +1,53 @@
+/* SuccessScreen.css */
+
+.container {
+  height: 100vh;
+  background: linear-gradient(135deg, #00ffcc, #004040);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Poppins", sans-serif;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 50px 40px;
+  text-align: center;
+  color: #fff;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 900;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.letter {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: fadeIn 0.5s ease forwards;
+  opacity: 0;
+}
+
+.success {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 20px;
+}
+
+.subtitle {
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
