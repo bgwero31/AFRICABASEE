@@ -5,31 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Afribase</title>
 
-    <!-- Import Poppins font for stylish design -->
+    <!-- Optional: Poppins font -->
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;900&display=swap"
       rel="stylesheet"
     />
-    
-    <!-- Optional: Add a favicon -->
-    <link rel="icon" href="/favicon.png" type="image/png" />
-    
-    <!-- Theme color for some mobile browsers -->
-    <meta name="theme-color" content="#00ffcc" />
 
-    <!-- Animation style for AFRIBASE MARKETPLACE letters -->
-    <style>
-      @keyframes flickerColor {
-        0%   { filter: brightness(1); }
-        25%  { filter: brightness(0.6); }
-        50%  { filter: brightness(1.4); }
-        75%  { filter: brightness(0.5); }
-        100% { filter: brightness(1); }
-      }
-    </style>
+    <!-- Optional: Favicon -->
+    <link rel="icon" href="/favicon.png" type="image/png" />
+
+    <!-- Theme color for mobile -->
+    <meta name="theme-color" content="#00ffcc" />
   </head>
 
-  <body style="margin: 0; background: #121212;">
+  <body style="margin: 0; background: #f9f9f9; font-family: 'Poppins', sans-serif;">
     <div id="root"></div>
   </body>
 </html>
