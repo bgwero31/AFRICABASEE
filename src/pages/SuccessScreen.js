@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import "./SuccessScreen.css"; // ✅ Import your CSS
 
 export default function SuccessScreen() {
   const navigate = useNavigate();
@@ -12,23 +13,29 @@ export default function SuccessScreen() {
   }, [navigate]);
 
   return (
-    <div style={container}>
-      <div style={card}>
-        <h1 style={title}>
+    <div className="container">
+      <div className="card">
+        <h1 className="title">
           {Array.from("AFRIBASE").map((letter, index) => (
-            <span key={index} style={{ ...letterStyle, background: getGradient(index) }}>
+            <span
+              key={index}
+              className="letter"
+              style={{
+                background: getGradient(index),
+                animationDelay: `${index * 0.1}s`, // Each letter fades in one by one
+              }}
+            >
               {letter}
             </span>
           ))}
         </h1>
-        <h2 style={success}>Success!</h2>
-        <p style={subtitle}>Welcome to Afribase. Redirecting...</p>
+        <h2 className="success">Success!</h2>
+        <p className="subtitle">Welcome to Afribase. Redirecting...</p>
       </div>
     </div>
   );
 }
 
-// ✅ This function gives each letter a slightly different gradient.
 const getGradient = (i) => {
   const colors = [
     "linear-gradient(to right, #00ffcc, #004040)",
@@ -41,48 +48,4 @@ const getGradient = (i) => {
     "linear-gradient(to right, #002222, #00dddd)",
   ];
   return colors[i % colors.length];
-};
-
-const container = {
-  height: "100vh",
-  background: "linear-gradient(135deg, #00ffcc, #004040)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  color: "#fff",
-  fontFamily: "Poppins, sans-serif",
-};
-
-const card = {
-  background: "#ffffff20",
-  backdropFilter: "blur(10px)",
-  borderRadius: "20px",
-  padding: "50px 40px",
-  textAlign: "center",
-};
-
-const title = {
-  fontSize: "48px",
-  fontWeight: "900",
-  display: "flex",
-  justifyContent: "center",
-  gap: "4px",
-  flexWrap: "wrap",
-};
-
-const letterStyle = {
-  backgroundClip: "text",
-  WebkitBackgroundClip: "text",
-  color: "transparent",
-};
-
-const success = {
-  fontSize: "28px",
-  fontWeight: "700",
-  marginTop: "20px",
-};
-
-const subtitle = {
-  fontSize: "16px",
-  marginTop: "10px",
 };
