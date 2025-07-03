@@ -8,6 +8,7 @@ import Chat from "./pages/Chat";
 import Market from "./pages/Market";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import SuccessScreen from "./pages/SuccessScreen";  // ✅ Add this import
 
 function App() {
   const [user, setUser] = useState(null);
@@ -44,10 +45,11 @@ function App() {
           <Route path="*" element={<Login />} />
         ) : (
           <>
-            <Route path="/" element={<Home />} />   {/* Navbar is inside Home */}
+            <Route path="/" element={<Home />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/market" element={<Market />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/success" element={<SuccessScreen />} /> {/* ✅ Added route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         )}
