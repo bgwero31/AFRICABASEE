@@ -1,4 +1,4 @@
-// Marketplace.js
+// src/pages/Market.js
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import {
@@ -15,7 +15,7 @@ import SendPrivateMessage from "../components/SendPrivateMessage";
 
 const imgbbKey = "30df4aa05f1af3b3b58ee8a74639e5cf";
 
-export default function Marketplace() {
+export default function Market() {
   const auth = getAuth();
   const [products, setProducts] = useState([]);
   const [title, setTitle] = useState("");
@@ -51,12 +51,12 @@ export default function Marketplace() {
         }
       });
     }
-  }, []);
+  }, [auth]);
 
   // Load products
   useEffect(() => {
     const productRef = ref(db, "products");
-    onValue(productRef, (snapshot) => {
+    const unsub = onValue(productRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const items = Object.entries(data).map(([id, val]) => ({
@@ -65,38 +65,31 @@ export default function Marketplace() {
           likes: val.likes || [],
           dislikes: val.dislikes || [],
           comments: val.comments
-            ? Object.entries(val.comments).map(([cid, c]) => ({
-                id: cid,
-                ...c,
-              }))
+            ? Object.entries(val.comments).map(([cid, c]) => ({ id: cid, ...c }))
             : [],
         }));
         setProducts(items.reverse());
+      } else {
+        setProducts([]);
       }
     });
+    return () => unsub();
   }, []);
 
   const handlePost = async () => {
     const user = auth.currentUser;
-    if (!user || !userWhatsApp)
-      return alert("Login and provide WhatsApp number.");
-
-    if (!title || !description || !price || !category || !image)
-      return alert("Fill all fields.");
+    if (!user || !userWhatsApp) return alert("Login and provide WhatsApp number.");
+    if (!title || !description || !price || !category || !image) return alert("Fill all fields.");
     setUploading(true);
-
     try {
       const formData = new FormData();
       formData.append("image", image);
-      const res = await fetch(
-        `https://api.imgbb.com/1/upload?key=${imgbbKey}`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+        method: "POST",
+        body: formData,
+      });
       const data = await res.json();
-      const url = data.data.url;
+      const url = data?.data?.url || "";
 
       await push(ref(db, "products"), {
         title,
@@ -119,7 +112,7 @@ export default function Marketplace() {
       setCategory("");
       setImage(null);
     } catch (err) {
-      alert("Upload failed: " + err.message);
+      alert("Upload failed: " + (err?.message || err));
     } finally {
       setUploading(false);
     }
@@ -129,20 +122,13 @@ export default function Marketplace() {
     const user = auth.currentUser;
     const text = commentInputs[productId];
     if (!user || !text) return;
-
-    const comment = {
-      name: user.displayName || "User",
-      text,
-      uid: user.uid,
-      timestamp: Date.now(),
-    };
+    const comment = { name: user.displayName || "User", text, uid: user.uid, timestamp: Date.now() };
     push(ref(db, `products/${productId}/comments`), comment);
     setCommentInputs({ ...commentInputs, [productId]: "" });
   };
 
   const deleteProduct = (id) => {
-    const confirmDelete = window.confirm("Delete this product?");
-    if (confirmDelete) {
+    if (window.confirm("Delete this product?")) {
       remove(ref(db, `products/${id}`));
     }
   };
@@ -155,9 +141,7 @@ export default function Marketplace() {
     const uid = auth.currentUser?.uid;
     if (!uid) return alert("Login first");
     const liked = p.likes.includes(uid);
-    const newLikes = liked
-      ? p.likes.filter((id) => id !== uid)
-      : [...p.likes, uid];
+    const newLikes = liked ? p.likes.filter((id) => id !== uid) : [...p.likes, uid];
     update(ref(db, `products/${p.id}`), { likes: newLikes });
   };
 
@@ -165,9 +149,7 @@ export default function Marketplace() {
     const uid = auth.currentUser?.uid;
     if (!uid) return alert("Login first");
     const dis = p.dislikes.includes(uid);
-    const newDislikes = dis
-      ? p.dislikes.filter((id) => id !== uid)
-      : [...p.dislikes, uid];
+    const newDislikes = dis ? p.dislikes.filter((id) => id !== uid) : [...p.dislikes, uid];
     update(ref(db, `products/${p.id}`), { dislikes: newDislikes });
   };
 
@@ -178,8 +160,8 @@ export default function Marketplace() {
 
   const filtered = products.filter(
     (p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase())
+      (p.title || "").toLowerCase().includes((search || "").toLowerCase()) ||
+      (p.description || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
   return (
@@ -193,21 +175,9 @@ export default function Marketplace() {
 
       {/* Form */}
       <div>
-        <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <input
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <input
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
+        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <input placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">Select Category</option>
           <option value="Electronics">📱 Electronics</option>
@@ -216,9 +186,7 @@ export default function Marketplace() {
           <option value="Vehicles">🚗 Vehicles</option>
         </select>
         <input type="file" onChange={(e) => setImage(e.target.files[0])} />
-        <button onClick={handlePost}>
-          {uploading ? "Uploading..." : "Post"}
-        </button>
+        <button onClick={handlePost}>{uploading ? "Uploading..." : "Post"}</button>
       </div>
 
       {/* Products */}
@@ -226,19 +194,9 @@ export default function Marketplace() {
         {filtered.map((p) => (
           <div key={p.id} style={styles.card}>
             {auth.currentUser?.uid === p.ownerUID && (
-              <button
-                style={styles.close}
-                onClick={() => deleteProduct(p.id)}
-              >
-                ❌
-              </button>
+              <button style={styles.close} onClick={() => deleteProduct(p.id)}>❌</button>
             )}
-            <img
-              src={p.image}
-              alt={p.title}
-              style={styles.image}
-              onClick={() => setModal(p)}
-            />
+            <img src={p.image} alt={p.title} style={styles.image} onClick={() => setModal(p)} />
             <h3>{p.title}</h3>
             <p>{p.description}</p>
             <strong style={{ color: "green" }}>{p.price}</strong>
@@ -247,34 +205,22 @@ export default function Marketplace() {
 
             {/* Likes */}
             <div>
-              <button onClick={() => toggleLike(p)}>👍 {p.likes.length}</button>
-              <button onClick={() => toggleDislike(p)}>
-                👎 {p.dislikes.length}
-              </button>
+              <button onClick={() => toggleLike(p)}>👍 {p.likes?.length || 0}</button>
+              <button onClick={() => toggleDislike(p)}>👎 {p.dislikes?.length || 0}</button>
             </div>
 
             {/* Comments */}
             <div>
-              <button
-                onClick={() =>
-                  setShowComments({
-                    ...showComments,
-                    [p.id]: !showComments[p.id],
-                  })
-                }
-              >
-                💬 Comments ({p.comments.length})
+              <button onClick={() => setShowComments({ ...showComments, [p.id]: !showComments[p.id] })}>
+                💬 Comments ({p.comments?.length || 0})
               </button>
               {showComments[p.id] && (
                 <div>
-                  {p.comments.map((c) => (
+                  {(p.comments || []).map((c) => (
                     <p key={c.id}>
                       <strong>{c.name}</strong>: {c.text}{" "}
                       {auth.currentUser?.uid === c.uid && (
-                        <span
-                          onClick={() => deleteComment(p.id, c.id)}
-                          style={{ color: "red", cursor: "pointer" }}
-                        >
+                        <span onClick={() => deleteComment(p.id, c.id)} style={{ color: "red", cursor: "pointer" }}>
                           ❌
                         </span>
                       )}
@@ -283,12 +229,7 @@ export default function Marketplace() {
                   <input
                     placeholder="Write comment..."
                     value={commentInputs[p.id] || ""}
-                    onChange={(e) =>
-                      setCommentInputs({
-                        ...commentInputs,
-                        [p.id]: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setCommentInputs({ ...commentInputs, [p.id]: e.target.value })}
                   />
                   <button onClick={() => handleComment(p.id)}>Post</button>
                 </div>
@@ -297,31 +238,18 @@ export default function Marketplace() {
 
             {/* Buttons */}
             <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-              <a
-                href={getWhatsAppLink(p.ownerPhoneNumber, p.title)}
-                target="_blank"
-                rel="noreferrer"
-                style={{
+              <a href={getWhatsAppLink(p.ownerPhoneNumber, p.title)} target="_blank" rel="noreferrer" style={{
                   background: "#25D366",
                   padding: 6,
                   borderRadius: 6,
                   color: "white",
-                }}
-              >
+                }}>
                 WhatsApp Seller
               </a>
-              <button
-                style={{
-                  background: "#007bff",
-                  color: "#fff",
-                  padding: 6,
-                  borderRadius: 6,
-                }}
-                onClick={() => {
-                  setSelectedUser({ uid: p.ownerUID, name: p.ownerName });
-                  setShowModal(true);
-                }}
-              >
+              <button style={{ background: "#007bff", color: "#fff", padding: 6, borderRadius: 6 }} onClick={() => {
+                setSelectedUser({ uid: p.ownerUID, name: p.ownerName });
+                setShowModal(true);
+              }}>
                 Chat Seller
               </button>
             </div>
@@ -332,85 +260,25 @@ export default function Marketplace() {
       {/* Image Zoom Modal */}
       {modal && (
         <div style={styles.overlay} onClick={() => setModal(null)}>
-          <img
-            src={modal.image}
-            alt="Zoom"
-            style={{
-              maxWidth: "90%",
-              maxHeight: "90%",
-              borderRadius: 10,
-              boxShadow: "0 0 20px #000",
-            }}
-          />
+          <img src={modal.image} alt="Zoom" style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: 10, boxShadow: "0 0 20px #000" }} />
         </div>
       )}
 
       {/* Private Inbox Modal */}
       {showModal && selectedUser && (
-        <SendPrivateMessage
-          recipientUID={selectedUser.uid}
-          recipientName={selectedUser.name}
-          onClose={() => setShowModal(false)}
-          productId={null}
-        />
+        <SendPrivateMessage recipientUID={selectedUser.uid} recipientName={selectedUser.name} onClose={() => setShowModal(false)} productId={null} />
       )}
     </div>
   );
 }
 
-// Styles
+// Styles (same as before)
 const styles = {
-  page: {
-    padding: 20,
-    minHeight: "100vh",
-    background: "white",
-    fontFamily: "Poppins",
-  },
-  search: {
-    width: "100%",
-    padding: 10,
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-    gap: 20,
-  },
-  card: {
-    background: "#fff",
-    borderRadius: 12,
-    padding: 10,
-    boxShadow: "0 0 5px rgba(0,0,0,0.1)",
-    position: "relative",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    objectFit: "cover",
-    borderRadius: 10,
-    cursor: "zoom-in",
-  },
-  close: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    background: "red",
-    color: "#fff",
-    border: "none",
-    borderRadius: "50%",
-    cursor: "pointer",
-    fontWeight: "bold",
-  },
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    background: "rgba(0,0,0,0.6)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  page: { padding: 20, minHeight: "100vh", background: "white", fontFamily: "Poppins" },
+  search: { width: "100%", padding: 10, fontSize: 16, marginBottom: 10 },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 20 },
+  card: { background: "#fff", borderRadius: 12, padding: 10, boxShadow: "0 0 5px rgba(0,0,0,0.1)", position: "relative" },
+  image: { width: "100%", height: 200, objectFit: "cover", borderRadius: 10, cursor: "zoom-in" },
+  close: { position: "absolute", top: 5, right: 5, background: "red", color: "#fff", border: "none", borderRadius: "50%", cursor: "pointer", fontWeight: "bold" },
+  overlay: { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center" },
 };
