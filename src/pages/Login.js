@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
@@ -8,37 +7,41 @@ import {
 } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { ref, set } from "firebase/database";
-import { db } from "../firebase";
-
-const auth = getAuth();
+import { db, auth } from "../firebase"; // ✅ use your initialized auth
 
 export default function Login() {
   const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
-  const [form, setForm] = useState({ emailOrPhone: "", password: "" });
+  const [mode, setMode] = useState("email"); // "email" or "phone"
+  const [form, setForm] = useState({ email: "", password: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
 
-  const isEmail = /\S+@\S+\.\S+/.test(form.emailOrPhone);
-
+  // ✅ Setup Recaptcha only once
   const setupRecaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
         "recaptcha-container",
-        { size: "invisible" },
-        auth
+        { size: "invisible", callback: () => {} }
       );
     }
     return window.recaptchaVerifier;
   };
 
+  // ✅ Handle Signup / Login
   const handleAuth = async () => {
     setLoading(true);
     try {
-      if (isSignup) {
-        if (isEmail) {
-          const res = await createUserWithEmailAndPassword(auth, form.emailOrPhone, form.password);
+      if (mode === "email") {
+        if (isSignup) {
+          // Email Signup
+          const res = await createUserWithEmailAndPassword(
+            auth,
+            form.email,
+            form.password
+          );
           await set(ref(db, `users/${res.user.uid}`), {
             name: "New User",
             email: res.user.email,
@@ -51,21 +54,26 @@ export default function Login() {
           });
           navigate("/");
         } else {
-          const appVerifier = setupRecaptcha();
-          const result = await signInWithPhoneNumber(auth, form.emailOrPhone, appVerifier);
-          setConfirmationResult(result);
-          alert("OTP sent! Enter it below.");
+          // Email Login
+          await signInWithEmailAndPassword(auth, form.email, form.password);
+          navigate("/");
         }
       } else {
-        if (isEmail) {
-          await signInWithEmailAndPassword(auth, form.emailOrPhone, form.password);
-          navigate("/");
-        } else {
-          const appVerifier = setupRecaptcha();
-          const result = await signInWithPhoneNumber(auth, form.emailOrPhone, appVerifier);
-          setConfirmationResult(result);
-          alert("OTP sent! Enter it below.");
+        // ✅ Phone Auth
+        if (!form.phone.startsWith("+")) {
+          alert("Please include country code, e.g. +2637...");
+          setLoading(false);
+          return;
         }
+
+        const appVerifier = setupRecaptcha();
+        const result = await signInWithPhoneNumber(
+          auth,
+          form.phone,
+          appVerifier
+        );
+        setConfirmationResult(result);
+        alert("OTP sent! Enter it below.");
       }
     } catch (err) {
       alert(err.message);
@@ -73,6 +81,7 @@ export default function Login() {
     setLoading(false);
   };
 
+  // ✅ Handle OTP confirmation
   const handleOtpConfirm = async () => {
     if (!confirmationResult || !otp) {
       alert("Please enter the OTP code.");
@@ -106,34 +115,68 @@ export default function Login() {
       <div style={card}>
         <h1 style={title}>AFRIBASE</h1>
         <p style={subtitle}>
-          {isSignup ? "Create your free account" : "Welcome back! Log in below"}
+          {isSignup ? "Create your free account" : "Welcome back!"}
         </p>
 
-        <input
-          type="text"
-          placeholder="Email or Phone Number"
-          value={form.emailOrPhone}
-          onChange={(e) => setForm({ ...form, emailOrPhone: e.target.value })}
-          style={input}
-        />
+        {/* ✅ Mode Toggle */}
+        <div style={toggleTabs}>
+          <button
+            style={{
+              ...toggleBtn,
+              background: mode === "email" ? "#00cc88" : "#ccc",
+            }}
+            onClick={() => setMode("email")}
+          >
+            📧 Email
+          </button>
+          <button
+            style={{
+              ...toggleBtn,
+              background: mode === "phone" ? "#00cc88" : "#ccc",
+            }}
+            onClick={() => setMode("phone")}
+          >
+            📱 Phone
+          </button>
+        </div>
 
-        {isEmail && (
+        {/* ✅ Email/Password Mode */}
+        {mode === "email" && (
+          <>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              style={input}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              style={input}
+            />
+          </>
+        )}
+
+        {/* ✅ Phone Mode */}
+        {mode === "phone" && (
           <input
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            type="tel"
+            placeholder="Phone Number (+263...)"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
             style={input}
           />
         )}
 
-        {!confirmationResult && (
+        {/* ✅ Buttons */}
+        {!confirmationResult ? (
           <button onClick={handleAuth} disabled={loading} style={button}>
             {loading ? "Processing..." : isSignup ? "Sign Up" : "Log In"}
           </button>
-        )}
-
-        {confirmationResult && (
+        ) : (
           <>
             <input
               type="text"
@@ -148,6 +191,7 @@ export default function Login() {
           </>
         )}
 
+        {/* ✅ Switch between Login / Signup */}
         <p style={switcher}>
           {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
           <span onClick={() => setIsSignup(!isSignup)} style={link}>
@@ -163,7 +207,7 @@ export default function Login() {
   );
 }
 
-// ✅ Refreshed styles for a clean modern look
+// ✅ Styles
 const container = {
   minHeight: "100vh",
   backgroundSize: "cover",
@@ -211,6 +255,22 @@ const subtitle = {
   fontSize: "15px",
   color: "#555",
   marginBottom: "25px",
+};
+
+const toggleTabs = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 10,
+  marginBottom: 20,
+};
+
+const toggleBtn = {
+  padding: "8px 16px",
+  borderRadius: 10,
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 600,
+  color: "#fff",
 };
 
 const input = {
