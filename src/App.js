@@ -9,7 +9,7 @@ import Market from "./pages/Market";       // ensure file is src/pages/Market.js
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import SuccessScreen from "./pages/SuccessScreen";
-import Inbox from "./pages/Inbox";         // new route for inbox (src/pages/Inbox.js)
+import InboxList from "./pages/InboxList"; // <- use InboxList (existing filename)
 
 function App() {
   const [user, setUser] = useState(null);
@@ -53,8 +53,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/success" element={<SuccessScreen />} />
             {/* Inbox routes - list and user-specific (Chat links to /inbox/:uid) */}
-            <Route path="/inbox" element={<Inbox />} />
-            <Route path="/inbox/:uid" element={<Inbox />} />
+            <Route path="/inbox" element={<InboxList />} />
+            <Route path="/inbox/:uid" element={<InboxList />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         )}
